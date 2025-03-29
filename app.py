@@ -19,7 +19,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-model = joblib.load("G:\\F.I.R.E.F.L.Y\\model\\fire_smoke_model.pkl")
+model_path = os.path.join(os.path.dirname(__file__), "model", "fire_smoke_model.pkl")
+model = joblib.load(model_path)
+
 
 base_model = VGG16(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
 feature_extractor = base_model
