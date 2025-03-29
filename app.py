@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Requests
+from fastapi import FastAPI, File, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import numpy as np
