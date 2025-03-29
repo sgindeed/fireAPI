@@ -57,3 +57,11 @@ async def predict(file: UploadFile = File(...)):
 
     except Exception as e:
         return {"error": str(e)}
+
+@app.exception_handler(404)
+async def custom_404_handler(request: Request, exc):
+    return JSONResponse(status_code=404, content={"message": "Go to /docs for the API"})
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome! Go to /docs for the API documentation."}
