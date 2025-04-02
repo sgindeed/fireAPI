@@ -65,3 +65,10 @@ async def custom_404_handler(request: Request, exc):
 @app.get("/")
 async def root():
     return {"message": "Welcome! Go to /docs for the API documentation."}
+
+from fastapi.responses import JSONResponse
+
+@app.get("/test/")
+async def test_api():
+    return JSONResponse(status_code=200, content={"message": "API is working!"})
+
