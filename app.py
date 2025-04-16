@@ -1,74 +1,72 @@
-from fastapi import FastAPI, File, UploadFile, Request
+from io import BytesIO
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from tensorflow import keras
+from keras._tf_keras.keras.applications import VGG16
+from keras._tf_keras.keras.applications.vgg16 import preprocess_input
+from keras._tf_keras.keras.preprocessing import image
 from PIL import Image
 import numpy as np
-import io
+import tensorflow as tf
 import pickle
-from tensorflow.keras.applications import VGG16
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.applications.vgg16 import preprocess_input
-import joblib
-import os
+import logging
+import magic
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-model_path = os.path.join(os.path.dirname(__file__), "model", "fire_smoke_model.pkl")
-model = joblib.load(model_path)
+try:
+    model_path = os.path.join(os.path.dirname(_file_), "model", "fire_smoke_model.pkl")
+    model = joblib.load(model_path)  
+    
+except FileNotFoundError:
+    raise RuntimeError("Model file 'fs_model_v2.pkl' not found.")
+except Exception as e:
+    raise RuntimeError(f"Error loading the model: {e}")
 
 
-base_model = VGG16(weights="imagenet", include_top=False, input_shape=(224, 224, 3))
+base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 feature_extractor = base_model
 
-def preprocess_and_extract(img):
-    if isinstance(img, str):
-        img = image.load_img(img, target_size=(224, 224))
-    else:
-        img = img.resize((224, 224))
 
+def preprocess_and_extract(img_bytes):
+    img = Image.open(BytesIO(img_bytes)).convert("RGB").resize((224,224))
     img_array = image.img_to_array(img)
     img_array = np.expand_dims(img_array, axis=0)
     img_array = preprocess_input(img_array)
-
     features = feature_extractor.predict(img_array)
-    features = features.flatten()[:25088]
-
+    features = features.flatten()
     return features
+
+def predict_fire_smoke(img_bytes):
+    features = preprocess_and_extract(img_bytes)
+    print(f"Raw model prediction: {raw_prediction}")
+    prediction = model.predict([features])[0]
+
+    if prediction == 1:
+        return "Fire"
+    elif prediction == 2:
+        return "Smoke"
+    elif prediction == 0:
+        return "Neutral"
+    else:
+        return f"Unknown prediction: {prediction}"
 
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...)):
     try:
-        contents = await file.read()
-        img = Image.open(io.BytesIO(contents))
+        img_bytes = await file.read()
 
-        features = preprocess_and_extract(img)
-        prediction = model.predict([features])[0]
+        prediction = predict_fire_smoke(img_bytes)
 
-        label_map = {1: "Fire", 2: "Smoke", 0: "Neutral"}
-
-        return {"prediction": label_map[prediction]}
-
+        return JSONResponse({"prediction": prediction})
     except Exception as e:
-        return {"error": str(e)}
-
-@app.exception_handler(404)
-async def custom_404_handler(request: Request, exc):
-    return JSONResponse(status_code=404, content={"message": "Go to /docs for the API"})
-
-@app.get("/")
-async def root():
-    return {"message": "Welcome! Go to /docs for the API documentation."}
-
-from fastapi.responses import JSONResponse
-
-@app.get("/test/")
-async def test_api():
-    return JSONResponse(status_code=200, content={"message": "API is working!"})
-
+        raise HTTPException(status_code=500, detail=str(e))
