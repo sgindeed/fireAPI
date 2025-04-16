@@ -50,7 +50,7 @@ def preprocess_and_extract(img_bytes):
 def predict_fire_smoke(img_bytes):
     features = preprocess_and_extract(img_bytes)
     print(f"Raw model prediction: {raw_prediction}")
-    prediction = model.predict([features])[0]
+    prediction = raw_prediction
 
     if prediction == 1:
         return "Fire"
