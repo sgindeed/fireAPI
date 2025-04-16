@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 try:
-    model_path = os.path.join(os.path.dirname(_file_), "model", "fire_smoke_model.pkl")
+    model_path = os.path.join(os.path.dirname(__file__), "model", "fire_smoke_model.pkl")
     model = joblib.load(model_path)  
     
 except FileNotFoundError:
