@@ -12,6 +12,7 @@ import tensorflow as tf
 import pickle
 import logging
 import magic
+import os
 import joblib
 
 app = FastAPI()
@@ -49,6 +50,7 @@ def preprocess_and_extract(img_bytes):
 
 def predict_fire_smoke(img_bytes):
     features = preprocess_and_extract(img_bytes)
+    raw_prediction = model.predict([features])[0]  # ✅ FIXED
     print(f"Raw model prediction: {raw_prediction}")
     prediction = raw_prediction
 
