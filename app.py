@@ -12,6 +12,7 @@ import tensorflow as tf
 import pickle
 import logging
 import magic
+import joblib
 
 app = FastAPI()
 
